@@ -52,10 +52,14 @@ swift build
 
 构建产物在 `.build/debug/ReadItLater`
 
-### 运行
+### 打包为 .app 并运行
 
 ```bash
-swift run
+# 一键打包到 ~/Applications
+./Scripts/package-app.sh
+
+# 双击启动
+open ~/Applications
 ```
 
 或在 Xcode 中打开 `Package.swift` 直接运行。
@@ -64,6 +68,8 @@ swift run
 1. 刘海区域会出现折叠态的 Read It Later
 2. 鼠标移到刘海区域 → 自动展开
 3. 按 `⌘⇧R` → 手动展开/收起
+
+💡 **开机自启动**：系统设置 → 通用 → 登录项 → 添加 `Read It Later.app`
 
 ### 安装 Chrome 扩展
 
