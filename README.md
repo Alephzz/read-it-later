@@ -21,19 +21,9 @@ Mac 刘海区"稍后再看"插件 — 一键保存链接，刘海区管理你的
 
 ## 📥 安装
 
-### 方案 A：下载 .app（推荐，无需 Command Line Tools）
-
 去 [Releases 页面](https://github.com/Alephzz/read-it-later/releases/latest) 下载 `ReadItLater.zip`，解压后双击 `Read It Later.app` 就能用。
 
 > 首次打开提示"无法验证开发者"：**系统设置 → 隐私与安全性** → 点击「仍要打开」。
-
-### 方案 B：一行命令编译（需要 Command Line Tools）
-
-```bash
-curl -fsSL https://alephzz.github.io/read-it-later/install.sh | bash
-```
-
-编译完成后打开访达 → 前往 `~/Applications` → 双击 **Read It Later.app**。
 
 ---
 
@@ -93,56 +83,6 @@ curl -fsSL https://alephzz.github.io/read-it-later/install.sh | bash
 - **HTTP 端口** — Chrome 扩展通信用的端口（一般不用改）
 - **自动抓取** — 保存链接时是否自动获取标题和摘要
 - **陈旧提醒天数** — 自定义变黄/变红的天数
-
----
-
-## 🧑‍💻 开发者看这里
-
-### 更新后重新打包
-
-```bash
-cd ~/Projects/read-it-later
-./Scripts/package-app.sh
-```
-
-### 技术栈
-
-- Swift + SwiftUI + AppKit
-- SQLite3（系统自带，零外部依赖）
-- Network.framework（本地 HTTP 服务）
-- Carbon.HIToolbox（全局快捷键）
-
-### 项目结构
-
-```
-read-it-later/
-├── ReadItLater/           # macOS 应用
-│   ├── Package.swift
-│   └── Sources/ReadItLater/
-│       ├── App/           # 应用入口
-│       ├── Models/        # 数据模型 + SQLite
-│       ├── Views/         # SwiftUI 视图
-│       └── Services/      # 刘海窗口、HTTP 服务、网页抓取
-├── chrome-extension/      # Chrome 扩展
-│   ├── manifest.json
-│   ├── popup.html/js      # 弹窗
-│   ├── background.js      # 后台
-│   └── options.html/js    # 设置
-└── Scripts/               # 打包脚本
-    └── package-app.sh
-```
-
-### 开发路线
-
-**Phase 1 ✅**
-- [x] 刘海窗口、SQLite、Chrome 扩展、自动抓取、域名分组、状态管理、去重
-
-**Phase 2（P1）**
-- [ ] 陈旧链接闪烁动画
-
-**Phase 3（P2）**
-- [ ] Chrome 扩展关闭标签页提示
-- [ ] 每日摘要推送、标签筛选、Markdown 笔记、导出
 
 ---
 
