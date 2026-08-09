@@ -21,15 +21,21 @@ Mac 刘海区"稍后再看"插件 — 一键保存链接，刘海区管理你的
 
 ## 📥 安装
 
-打开终端，复制下面这一行，回车：
+### 方案 A：下载 .app（推荐，无需 Command Line Tools）
+
+去 [Releases 页面](https://github.com/Alephzz/read-it-later/releases/latest) 下载 `ReadItLater.zip`，解压后双击 `Read It Later.app` 就能用。
+
+> 首次打开提示"无法验证开发者"：**系统设置 → 隐私与安全性** → 点击「仍要打开」。
+
+### 方案 B：一行命令编译（需要 Command Line Tools）
 
 ```bash
 curl -fsSL https://alephzz.github.io/read-it-later/install.sh | bash
 ```
 
-等待 1-2 分钟，编译完成后打开访达 → 前往 `~/Applications` → 双击 **Read It Later.app** 即可运行。
+编译完成后打开访达 → 前往 `~/Applications` → 双击 **Read It Later.app**。
 
-> 首次运行会提示 Command Line Tools 安装（系统自动弹出）。如果遇到"无法验证开发者"，去**系统设置 → 隐私与安全性** → 点击「仍要打开」。
+---
 
 **没有任何窗口弹出是正常的**。这是一个常驻后台的应用，刘海区域会出现 📖 图标。
 
