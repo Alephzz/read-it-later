@@ -21,7 +21,7 @@ Mac 刘海区"稍后再看"插件 — 一键保存链接，刘海区管理你的
 
 ## 📥 安装
 
-去 [Releases 页面](https://github.com/Alephzz/read-it-later/releases/latest) 下载 `ReadItLater.zip`，解压后双击 `Read It Later.app` 就能用。
+[⬇ 下载 ReadItLater.zip](https://github.com/Alephzz/read-it-later/releases/latest/download/ReadItLater.zip)，解压后双击 `Read It Later.app` 就能用。
 
 > 首次打开提示"无法验证开发者"：**系统设置 → 隐私与安全性** → 点击「仍要打开」。
 
