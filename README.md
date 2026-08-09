@@ -5,6 +5,9 @@ Mac 刘海区"稍后再看"插件 — 一键保存链接，刘海区管理你的
 ![Platform](https://img.shields.io/badge/platform-macOS%2013%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Website](https://img.shields.io/badge/website-alephzz.github.io%2Fread--it--later-9cf)
+
+🌐 [alephzz.github.io/read-it-later](https://alephzz.github.io/read-it-later/)
 
 ## ✨ 功能特点
 
