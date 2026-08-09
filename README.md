@@ -19,38 +19,19 @@ Mac 刘海区"稍后再看"插件 — 一键保存链接，刘海区管理你的
 
 ---
 
-## 📥 安装（3 步）
+## 📥 安装
 
-### 准备工作
-
-你的 Mac 需要先安装 **Xcode**（或至少安装 Command Line Tools）。打开终端，输入以下命令检查：
+打开终端，复制下面这一行，回车：
 
 ```bash
-xcode-select --install   # 如果没装过会弹出安装提示
+curl -fsSL https://alephzz.github.io/read-it-later/install.sh | bash
 ```
 
-另外你需要一个**支持 Git 的网络环境**（能访问 GitHub）。
+等待 1-2 分钟，编译完成后打开访达 → 前往 `~/Applications` → 双击 **Read It Later.app** 即可运行。
 
-### 第一步：下载项目
+> 首次运行会提示 Command Line Tools 安装（系统自动弹出）。如果遇到"无法验证开发者"，去**系统设置 → 隐私与安全性** → 点击「仍要打开」。
 
-```bash
-git clone https://github.com/Alephzz/read-it-later.git
-cd read-it-later
-```
-
-### 第二步：打包成 .app
-
-```bash
-./Scripts/package-app.sh
-```
-
-这个命令会编译项目并生成 `Read It Later.app`，放在你的 `~/Applications` 文件夹里。全程自动，等着就行。
-
-### 第三步：启动
-
-打开访达，前往 `~/Applications`（或在终端输入 `open ~/Applications`），双击 **Read It Later.app** 即可运行。
-
-**没有任何窗口弹出是正常的**。这是一个常驻后台的应用，刘海区域会出现一个小图标。
+**没有任何窗口弹出是正常的**。这是一个常驻后台的应用，刘海区域会出现 📖 图标。
 
 💡 **开机自启动**：系统设置 → 通用 → 登录项与扩展 → 点击 `+` → 选择 `Read It Later.app`
 
