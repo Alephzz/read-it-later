@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Read It Later — Mac 刘海稍后读插件</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0d0d0f;
+    color: #e0e0e0;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .hero {
+    text-align: center;
+    padding: 80px 24px 60px;
+  }
+  .hero .icon { font-size: 64px; margin-bottom: 20px; }
+  .hero h1 { font-size: 36px; font-weight: 700; margin-bottom: 12px; color: #fff; }
+  .hero .tagline { font-size: 18px; color: #999; margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto; }
+  .hero .notch-preview {
+    display: inline-block;
+    background: #1a1a1d;
+    border-radius: 14px;
+    padding: 8px 24px;
+    margin-bottom: 32px;
+    font-size: 14px;
+    color: #ccc;
+  }
+  .btn {
+    display: inline-block;
+    padding: 14px 40px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: #f5a623;
+    color: #1a1a1a;
+  }
+  .btn-primary:hover { background: #e6951a; transform: translateY(-1px); }
+  .btn-secondary {
+    background: #2a2a2d;
+    color: #e0e0e0;
+    margin-left: 12px;
+  }
+  .btn-secondary:hover { background: #353538; }
+
+  .features {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .features h2 {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 40px;
+    color: #fff;
+  }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+  }
+  .feature-card {
+    background: #1a1a1d;
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .feature-card .emoji { font-size: 28px; margin-bottom: 12px; }
+  .feature-card h3 { font-size: 15px; color: #fff; margin-bottom: 8px; }
+  .feature-card p { font-size: 13px; color: #888; }
+
+  .steps {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  .steps h2 {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 40px;
+    color: #fff;
+  }
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    align-items: flex-start;
+  }
+  .step-num {
+    background: #f5a623;
+    color: #1a1a1a;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step-content h4 { font-size: 15px; color: #fff; margin-bottom: 4px; }
+  .step-content p { font-size: 13px; color: #888; }
+  .step-content code {
+    background: #1a1a1d;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #f5a623;
+  }
+
+  .warning {
+    max-width: 640px;
+    margin: 0 auto 80px;
+    padding: 16px 24px;
+    background: #1a1a0d;
+    border: 1px solid #3a3a1a;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #aaa;
+    text-align: center;
+  }
+
+  footer {
+    text-align: center;
+    padding: 40px 24px;
+    color: #555;
+    font-size: 12px;
+  }
+  footer a { color: #888; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="icon">📖</div>
+  <h1>Read It Later</h1>
+  <p class="tagline">
+    Mac 刘海区"稍后再看"插件<br>
+    存链接、不丢失、真去读
+  </p>
+  <div class="notch-preview">🐱 鼠标移到刘海 → 📖 展开阅读列表 → 点链接就打开</div>
+  <br>
+  <a href="https://github.com/Alephzz/read-it-later/releases/latest/download/ReadItLater.zip" class="btn btn-primary">⬇ 下载 Read It Later</a>
+  <a href="https://github.com/Alephzz/read-it-later" class="btn btn-secondary">GitHub →</a>
+</div>
+
+<div class="features">
+  <h2>✨ 功能</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="emoji">🎯</div>
+      <h3>刘海交互</h3>
+      <p>鼠标移到刘海区域自动展开，⌘⇧R 一键打开</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">🔗</div>
+      <h3>一键保存</h3>
+      <p>Chrome 扩展一键保存当前页面，自动抓取标题和摘要</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">📊</div>
+      <h3>自动分组</h3>
+      <p>按域名自动归类：GitHub、微信、Twitter……</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">🚦</div>
+      <h3>陈旧提醒</h3>
+      <p><7天绿 · 7-30天黄 · >30天红</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">🔍</div>
+      <h3>快速搜索</h3>
+      <p>按标题、URL、域名搜索，秒找链接</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">🔒</div>
+      <h3>隐私安全</h3>
+      <p>数据纯本地存储，不联网，不收集任何信息</p>
+    </div>
+  </div>
+</div>
+
+<div class="steps">
+  <h2>📥 三步安装</h2>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <h4>下载并解压</h4>
+      <p>点击上方下载按钮，解压得到 <code>Read It Later.app</code></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <h4>移到应用程序文件夹</h4>
+      <p>拖拽到 <code>/Applications</code> 或留在下载文件夹都可以</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <h4>双击启动</h4>
+      <p>没有任何窗口弹出是正常的。刘海区会出现 📖 图标，鼠标移过去就展开了</p>
+    </div>
+  </div>
+</div>
+
+<div class="warning">
+  ⚠️ 首次打开时，系统可能提示"无法验证开发者"。<br>
+  前往 <strong>系统设置 → 隐私与安全性</strong>，往下翻到「安全性」区域，点击「仍要打开」。
+</div>
+
+<footer>
+  <a href="https://github.com/Alephzz/read-it-later">GitHub</a> &nbsp;·&nbsp;
+  MIT License
+</footer>
+
+</body>
+</html>
