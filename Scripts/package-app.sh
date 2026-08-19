@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BUILD_DIR="$PROJECT_DIR/.build/release"
+PROJECT_DIR="$(cd "$(dirname "$0")/../ReadItLater" && pwd)"
 APP_DIR="$HOME/Applications/Read It Later.app/Contents"
 
 echo "🔨 Building..."
@@ -10,8 +9,9 @@ cd "$PROJECT_DIR"
 swift build -c release
 
 echo "📦 Packaging..."
+BIN_DIR="$(swift build -c release --show-bin-path)"
 mkdir -p "$APP_DIR/MacOS" "$APP_DIR/Resources"
-cp "$BUILD_DIR/ReadItLater" "$APP_DIR/MacOS/ReadItLater"
+cp "$BIN_DIR/ReadItLater" "$APP_DIR/MacOS/ReadItLater"
 
 cat > "$APP_DIR/Info.plist" << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>

@@ -28,22 +28,32 @@ struct NotchView: View {
 }
 
 struct UnreadBadge: View {
-    @State private var unreadCount: Int = 0
+    @State private var badgeCount: Int = 0
 
     var body: some View {
-        if unreadCount > 0 {
-            Text("\(unreadCount)")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color.orange)
-                .clipShape(Capsule())
+        Group {
+            if badgeCount > 0 {
+                Text("\(badgeCount)")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.orange)
+                    .clipShape(Capsule())
+            }
+        }
+        .onAppear { updateCount() }
+        .onReceive(NotificationCenter.default.publisher(for: .notchDidCollapse)) { _ in
+            updateCount()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .itemsDidChange)) { _ in
+            updateCount()
         }
     }
 
+    /// 角标口径 = 待处理（未读 + 在读），表示"还有几件没读完"
     func updateCount() {
-        unreadCount = DatabaseService.shared.fetchUnread().count
+        badgeCount = DatabaseService.shared.fetchPending().count
     }
 }
 

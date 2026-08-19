@@ -5,6 +5,7 @@ struct AddItemView: View {
     @ObservedObject var store: ItemStore
     @State private var urlInput: String = ""
     @State private var titleInput: String = ""
+    @State private var tagsInput: String = ""
     @State private var isSaving = false
     @State private var errorMessage: String?
     private let database = DatabaseService.shared
@@ -42,6 +43,19 @@ struct AddItemView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
             }
 
+            VStack(alignment: .leading, spacing: 4) {
+                Text("标签（可选，逗号分隔）")
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.4))
+                TextField("AI, 效率", text: $tagsInput)
+                    .textFieldStyle(.plain)
+                    .foregroundColor(.white)
+                    .font(.system(size: 13))
+                    .padding(8)
+                    .background(Color.white.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+
             if let error = errorMessage {
                 Text(error)
                     .font(.system(size: 11))
@@ -69,7 +83,7 @@ struct AddItemView: View {
             }
         }
         .padding(20)
-        .frame(width: 400, height: 220)
+        .frame(width: 400, height: 280)
         .background(Color(red: 0.13, green: 0.13, blue: 0.15))
     }
 
@@ -84,7 +98,7 @@ struct AddItemView: View {
             return
         }
 
-        if database.exists(url: urlString) {
+        if database.existsNormalized(url: urlString) {
             errorMessage = "该链接已存在"
             return
         }
@@ -100,7 +114,7 @@ struct AddItemView: View {
             summary: nil,
             faviconData: nil,
             domain: domain,
-            tags: [],
+            tags: TagParser.parse(tagsInput),
             status: .unread,
             createdAt: Date(),
             readAt: nil
@@ -109,6 +123,7 @@ struct AddItemView: View {
         do {
             try database.save(item)
             store.refresh()
+            NotificationCenter.default.post(name: .itemsDidChange, object: nil)
 
             if titleInput.isEmpty {
                 Task {

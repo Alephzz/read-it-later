@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("httpPort") private var httpPort: Int = 19623
     @AppStorage("autoScrape") private var autoScrape: Bool = true
     @AppStorage("stalenessDays") private var stalenessDays: String = "7,30"
     @AppStorage("displayLanguage") private var displayLanguage: String = "auto"
@@ -37,17 +36,6 @@ struct SettingsView: View {
 
                 Divider()
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("HTTP 服务端口")
-                        .font(.system(size: 14, weight: .semibold))
-                    Text("Chrome 扩展通过此端口与 Read It Later 通信")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                    TextField("端口号", value: $httpPort, format: .number)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 100)
-                }
-
                 Toggle("自动抓取网页信息", isOn: $autoScrape)
                     .toggleStyle(.switch)
 
@@ -60,6 +48,22 @@ struct SettingsView: View {
                     TextField("7,30", text: $stalenessDays)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 100)
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("数据")
+                        .font(.system(size: 14, weight: .semibold))
+                    HStack(spacing: 8) {
+                        Button("导出数据") { exportData() }
+                            .buttonStyle(.bordered)
+                        Button("导入数据") { importData() }
+                            .buttonStyle(.bordered)
+                    }
+                    Text("导出为 JSON 文件，可备份或迁移到其他电脑")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
                 }
 
                 Divider()
@@ -81,5 +85,28 @@ struct SettingsView: View {
             .padding(24)
             .frame(width: 380)
         }
+    }
+
+    // MARK: - 数据备份
+
+    private func exportData() {
+        let items = DatabaseService.shared.fetchAll()
+        guard let data = DataBackup.exportJSON(items: items) else {
+            DataBackup.presentError("导出失败：无法序列化数据")
+            return
+        }
+        let date = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
+        DataBackup.writeToFile(data: data, suggestedName: "ReadItLater-\(date).json")
+    }
+
+    private func importData() {
+        guard let data = DataBackup.pickAndRead() else { return }
+        guard let items = DataBackup.decodeItems(from: data), !items.isEmpty else {
+            DataBackup.presentError("导入失败：文件不是有效的备份格式")
+            return
+        }
+        DatabaseService.shared.saveItems(items)
+        NotificationCenter.default.post(name: .itemsDidChange, object: nil)
+        DataBackup.presentError("已导入 \(items.count) 条记录")
     }
 }

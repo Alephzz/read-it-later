@@ -141,7 +141,7 @@ struct DetailView: View {
                 Button("保存") {
                     var updated = item
                     updated.title = editedTitle
-                    updated.tags = editedTags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                    updated.tags = TagParser.parse(editedTags)
                     updated.status = currentStatus  // Include current status
                     store.update(updated)
                     dismiss()

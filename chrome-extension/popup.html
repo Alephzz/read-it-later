@@ -42,6 +42,24 @@
       text-overflow: ellipsis;
       font-family: monospace;
     }
+    .tags-input {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px solid #3a3a3d;
+      border-radius: 8px;
+      background: #2a2a2d;
+      color: #e0e0e0;
+      font-size: 12px;
+      box-sizing: border-box;
+      outline: none;
+    }
+    .tags-input:focus { border-color: #f5a623; }
+    .tags-hint {
+      font-size: 10px;
+      color: #777;
+      margin-top: 4px;
+    }
     .btn {
       width: 100%;
       padding: 10px;
@@ -90,12 +108,15 @@
     <div class="page-url" id="pageUrl">...</div>
   </div>
 
+  <input type="text" class="tags-input" id="tagsInput" placeholder="标签（可选，逗号分隔）" autocomplete="off">
+  <div class="tags-hint">保存后可右键编辑标签</div>
+
   <button class="btn btn-primary" id="saveBtn" disabled>保存到 Read It Later</button>
 
   <div class="status" id="statusMsg"></div>
 
   <div class="footer">
-    <a href="#" id="settingsLink">设置</a>
+    <a href="#" id="settingsLink">需先打开 Mac 上的 Read It Later 应用</a>
   </div>
 
   <script src="popup.js"></script>

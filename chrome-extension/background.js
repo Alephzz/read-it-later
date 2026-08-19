@@ -18,11 +18,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function saveUrl(url, title) {
-  const port = await new Promise((resolve) => {
-    chrome.storage.local.get(['port'], (result) => {
-      resolve(result.port || 19623);
-    });
-  });
+  // 端口固定为 19623，与 Mac 应用写死的监听端口一致
+  const port = 19623;
 
   const resp = await fetch(`http://localhost:${port}/api/save`, {
     method: 'POST',

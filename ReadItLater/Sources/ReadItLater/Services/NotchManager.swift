@@ -203,6 +203,8 @@ class NotchPanel: NSPanel {
 extension Notification.Name {
     static let notchDidExpand = Notification.Name("notchDidExpand")
     static let notchDidCollapse = Notification.Name("notchDidCollapse")
+    /// 条目变化（新增/保存成功），用于角标等实时刷新
+    static let itemsDidChange = Notification.Name("itemsDidChange")
 }
 
 // MARK: - Container View

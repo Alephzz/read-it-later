@@ -2,10 +2,21 @@ import SwiftUI
 
 struct ItemRowView: View {
     let item: Item
+    var onToggleDone: (() -> Void)? = nil
     @AppStorage("showSummary") private var showSummary: Bool = true
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
+            // 一键标记已读 / 恢复未读（同时作为状态指示器）
+            Button(action: { onToggleDone?() }) {
+                statusIcon
+                    .font(.system(size: 13))
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(item.status == .done ? "恢复为未读" : "标记为已读")
+
             // Favicon or domain icon
             faviconView
                 .padding(.top, 2)
@@ -38,13 +49,20 @@ struct ItemRowView: View {
                             .foregroundColor(.white.opacity(0.2))
                     }
                 }
+
+                // 标签
+                if !item.tags.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(item.tags, id: \.self) { tag in
+                            Text("#\(tag)")
+                                .font(.system(size: 9))
+                                .foregroundColor(.orange.opacity(0.8))
+                        }
+                    }
+                }
             }
 
             Spacer()
-
-            // Status indicator
-            statusIndicator
-                .padding(.top, 2)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -73,25 +91,19 @@ struct ItemRowView: View {
     // MARK: - Status
 
     @ViewBuilder
-    private var statusIndicator: some View {
+    private var statusIcon: some View {
         switch item.status {
         case .done:
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(.green.opacity(0.6))
-                .font(.system(size: 12))
         case .reading:
-            Image(systemName: "book.fill")
+            Image(systemName: "circle.inset.filled")
                 .foregroundColor(.blue.opacity(0.6))
-                .font(.system(size: 12))
         case .unread:
-            stalenessDot
+            // 圆圈描边颜色 = 陈旧程度（绿=新鲜 / 黄=渐旧 / 红=陈旧）
+            Image(systemName: "circle")
+                .foregroundColor(stalenessColor)
         }
-    }
-
-    private var stalenessDot: some View {
-        Circle()
-            .fill(stalenessColor)
-            .frame(width: 6, height: 6)
     }
 
     private var stalenessColor: Color {

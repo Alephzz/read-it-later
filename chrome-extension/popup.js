@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const pageUrl = document.getElementById('pageUrl');
   const saveBtn = document.getElementById('saveBtn');
   const statusMsg = document.getElementById('statusMsg');
-  const settingsLink = document.getElementById('settingsLink');
+  const tagsInput = document.getElementById('tagsInput');
 
   // Get current tab info
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -39,12 +39,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const port = await getPort();
+      const tags = tagsInput.value.split(/[,，;；]/).map(s => s.trim()).filter(Boolean);
       const resp = await fetch(`http://localhost:${port}/api/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: tab.url,
-          title: tab.title || tab.url
+          title: tab.title || tab.url,
+          tags
         })
       });
 
@@ -66,18 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       saveBtn.textContent = '重试';
     }
   });
-
-  // Settings link
-  settingsLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.runtime.openOptionsPage();
-  });
 });
 
+// 端口固定为 19623，与 Mac 应用写死的监听端口一致
 async function getPort() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(['port'], (result) => {
-      resolve(result.port || 19623);
-    });
-  });
+  return 19623;
 }

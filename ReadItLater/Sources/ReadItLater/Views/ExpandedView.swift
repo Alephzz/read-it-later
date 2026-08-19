@@ -1,5 +1,25 @@
 import SwiftUI
 
+/// 列表状态过滤：待处理 = 未读 + 在读，已读 = 归档
+private enum StatusFilter {
+    case active
+    case done
+
+    var label: String {
+        switch self {
+        case .active: return "待处理"
+        case .done: return "已读"
+        }
+    }
+}
+
+/// 撤销提示：标记为已读后短暂出现，可一键回滚到原状态
+private struct UndoState: Equatable {
+    let itemId: UUID
+    let previousStatus: ItemStatus
+    let message: String
+}
+
 struct ExpandedView: View {
     let manager: NotchManager
     @ObservedObject var store: ItemStore
@@ -7,6 +27,11 @@ struct ExpandedView: View {
     @State private var selectedDomain: String? = nil
     @State private var showingAddSheet = false
     @State private var selectedDetailItem: Item? = nil
+    @State private var statusFilter: StatusFilter = .active
+    @State private var selectedTags: Set<String> = []
+    @State private var undoState: UndoState?
+    @State private var tagEditingItem: Item? = nil
+    @State private var tagEditText: String = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -16,14 +41,14 @@ struct ExpandedView: View {
             Divider().background(Color.white.opacity(0.1))
 
             // Content
-            if filteredItems.isEmpty {
-                emptyView
-            } else {
-                if selectedDomain == nil {
-                    domainGroupedView
+            if selectedDomain == nil {
+                if filteredItems.isEmpty {
+                    emptyView
                 } else {
-                    flatListView
+                    domainGroupedView
                 }
+            } else {
+                flatListView
             }
         }
         .frame(width: 680, height: 420)
@@ -37,6 +62,9 @@ struct ExpandedView: View {
         .onReceive(NotificationCenter.default.publisher(for: .notchDidExpand)) { _ in
             store.refresh()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .itemsDidChange)) { _ in
+            store.refresh()
+        }
         .sheet(isPresented: $showingAddSheet) {
             AddItemView(store: store)
         }
@@ -48,6 +76,30 @@ struct ExpandedView: View {
         }
         .onChange(of: selectedDetailItem) { newValue in
             manager.setSheetActive(newValue != nil)
+        }
+        .sheet(item: $tagEditingItem) { item in
+            TagEditView(item: item, store: store)
+        }
+        .onChange(of: tagEditingItem) { newValue in
+            manager.setSheetActive(newValue != nil)
+        }
+        .onChange(of: filteredItems) { newItems in
+            // 当前域名下没有条目时自动返回分组视图（例如最后一个已读归档后）
+            if let domain = selectedDomain, !newItems.contains(where: { $0.domain == domain }) {
+                selectedDomain = nil
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let undo = undoState {
+                undoToast(undo)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .padding(.bottom, 10)
+            }
+        }
+        .task(id: undoState) {
+            guard undoState != nil else { return }
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            withAnimation(.easeOut(duration: 0.2)) { undoState = nil }
         }
     }
 
@@ -109,43 +161,59 @@ struct ExpandedView: View {
 
         return ScrollView {
             LazyVStack(spacing: 8) {
+                // 状态过滤：待处理 / 已读（归档）
+                HStack(spacing: 6) {
+                    pillButton(label: StatusFilter.active.label, count: activeCount, isSelected: statusFilter == .active) {
+                        statusFilter = .active
+                    }
+                    pillButton(label: StatusFilter.done.label, count: doneCount, isSelected: statusFilter == .done) {
+                        statusFilter = .done
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+
+                // 域名过滤
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
-                        domainPill(label: "全部", count: filteredItems.count, isSelected: selectedDomain == nil)
+                        pillButton(label: "全部", count: filteredItems.count, isSelected: selectedDomain == nil) {
+                            selectedDomain = nil
+                        }
                         ForEach(sortedDomains, id: \.self) { domain in
-                            domainPill(label: domain, count: grouped[domain]?.count ?? 0, isSelected: false) {
+                            pillButton(label: domain, count: grouped[domain]?.count ?? 0, isSelected: false) {
                                 selectedDomain = domain
                             }
                         }
                     }
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 6)
                 }
 
-                ForEach(filteredItems) { item in
-                    ItemRowView(item: item)
-                        .onTapGesture {
-                            if let url = item.url, let link = URL(string: url) {
-                                NSWorkspace.shared.open(link)
-                                if item.status == .unread {
-                                    store.updateStatus(id: item.id, status: .reading)
+                // 标签过滤（仅当有标签时显示）
+                if !allTags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            pillButton(label: "全部标签", count: tagFilteredCount(selected: nil), isSelected: selectedTags.isEmpty) {
+                                selectedTags = []
+                            }
+                            ForEach(allTags, id: \.self) { tag in
+                                pillButton(label: tag, count: tagFilteredCount(selected: tag), isSelected: selectedTags.contains(tag)) {
+                                    toggleTag(tag)
                                 }
                             }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                    }
+                }
+
+                ForEach(filteredItems) { item in
+                    ItemRowView(item: item, onToggleDone: { toggleDone(item) })
+                        .onTapGesture {
+                            openItem(item)
+                        }
                         .contextMenu {
-                            Button("标记为已读") {
-                                store.updateStatus(id: item.id, status: .done)
-                            }
-                            Button("标记为在读") {
-                                store.updateStatus(id: item.id, status: .reading)
-                            }
-                            Button("查看详情") {
-                                selectedDetailItem = item
-                            }
-                            Divider()
-                            Button("删除", role: .destructive) {
-                                store.delete(id: item.id)
-                            }
+                            itemContextMenu(item)
                         }
                 }
             }
@@ -180,29 +248,12 @@ struct ExpandedView: View {
             ScrollView {
                 LazyVStack(spacing: 4) {
                     ForEach(filteredItems.filter { $0.domain == selectedDomain }) { item in
-                        ItemRowView(item: item)
+                        ItemRowView(item: item, onToggleDone: { toggleDone(item) })
                             .onTapGesture {
-                                if let url = item.url, let link = URL(string: url) {
-                                    NSWorkspace.shared.open(link)
-                                    if item.status == .unread {
-                                        store.updateStatus(id: item.id, status: .reading)
-                                    }
-                                }
+                                openItem(item)
                             }
                             .contextMenu {
-                                Button("标记为已读") {
-                                    store.updateStatus(id: item.id, status: .done)
-                                }
-                                Button("标记为在读") {
-                                    store.updateStatus(id: item.id, status: .reading)
-                                }
-                                Button("查看详情") {
-                                    selectedDetailItem = item
-                                }
-                                Divider()
-                                Button("删除", role: .destructive) {
-                                    store.delete(id: item.id)
-                                }
+                                itemContextMenu(item)
                             }
                     }
                 }
@@ -218,7 +269,7 @@ struct ExpandedView: View {
             Image(systemName: "tray")
                 .font(.system(size: 32))
                 .foregroundColor(.white.opacity(0.2))
-            Text("还没有保存任何链接")
+            Text(emptyText)
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.4))
             Text("按 ⌘+Shift+R 或点击 + 添加")
@@ -230,8 +281,65 @@ struct ExpandedView: View {
 
     // MARK: - Helpers
 
-    private func domainPill(label: String, count: Int, isSelected: Bool, action: (() -> Void)? = nil) -> some View {
-        Button(action: { action?() }) {
+    private var searchFiltered: [Item] {
+        var result = store.items
+        if !searchText.isEmpty {
+            result = result.filter {
+                $0.title.localizedCaseInsensitiveContains(searchText) ||
+                ($0.url?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                $0.domain.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        return result
+    }
+
+    private var filteredItems: [Item] {
+        var result = searchFiltered
+        if !selectedTags.isEmpty {
+            result = result.filter { item in
+                !selectedTags.isDisjoint(with: item.tags)
+            }
+        }
+        switch statusFilter {
+        case .active: return result.filter { $0.status != .done }
+        case .done: return result.filter { $0.status == .done }
+        }
+    }
+
+    private var activeCount: Int { searchFiltered.filter { $0.status != .done }.count }
+    private var doneCount: Int { searchFiltered.filter { $0.status == .done }.count }
+
+    /// 全部标签（去重、排序，来自待处理+已读的所有条目）
+    private var allTags: [String] {
+        let tags = Set(store.items.flatMap { $0.tags })
+        return tags.sorted()
+    }
+
+    private func toggleTag(_ tag: String) {
+        if selectedTags.contains(tag) {
+            selectedTags.remove(tag)
+        } else {
+            selectedTags.insert(tag)
+        }
+        statusFilter = .active
+    }
+
+    /// 某个标签（或全部标签）在当前状态+搜索+域名条件下对应的条目数
+    private func tagFilteredCount(selected: String?) -> Int {
+        let base = searchFiltered
+        let tag = selected
+        switch statusFilter {
+        case .active: return base.filter { $0.status != .done && (tag == nil || $0.tags.contains(tag!)) }.count
+        case .done: return base.filter { $0.status == .done && (tag == nil || $0.tags.contains(tag!)) }.count
+        }
+    }
+
+    private var emptyText: String {
+        statusFilter == .active ? "还没有保存任何链接" : "还没有已读的链接"
+    }
+
+    private func pillButton(label: String, count: Int, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             HStack(spacing: 4) {
                 Text(label)
                 Text("\(count)")
@@ -248,16 +356,80 @@ struct ExpandedView: View {
         .buttonStyle(.plain)
     }
 
-    private var filteredItems: [Item] {
-        var result = store.items
-        if !searchText.isEmpty {
-            result = result.filter {
-                $0.title.localizedCaseInsensitiveContains(searchText) ||
-                ($0.url?.localizedCaseInsensitiveContains(searchText) ?? false) ||
-                $0.domain.localizedCaseInsensitiveContains(searchText)
+    private func openItem(_ item: Item) {
+        if let url = item.url, let link = URL(string: url) {
+            NSWorkspace.shared.open(link)
+            if item.status == .unread {
+                store.updateStatus(id: item.id, status: .reading)
             }
         }
-        return result
+    }
+
+    /// 行内圆圈按钮：已读 ↔ 未读 切换
+    private func toggleDone(_ item: Item) {
+        if item.status == .done {
+            store.updateStatus(id: item.id, status: .unread)
+        } else {
+            markAsDone(item)
+        }
+    }
+
+    /// 标记为已读，并弹出可撤销的提示
+    private func markAsDone(_ item: Item) {
+        store.updateStatus(id: item.id, status: .done)
+        withAnimation(.spring(response: 0.35)) {
+            undoState = UndoState(itemId: item.id, previousStatus: item.status, message: "已标为已读")
+        }
+    }
+
+    private func undoToast(_ undo: UndoState) -> some View {
+        HStack(spacing: 10) {
+            Text(undo.message)
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.9))
+            Button("撤销") {
+                store.updateStatus(id: undo.itemId, status: undo.previousStatus)
+                withAnimation(.easeOut(duration: 0.2)) { undoState = nil }
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(.orange)
+            .font(.system(size: 12, weight: .semibold))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 9)
+        .background(Color(red: 0.07, green: 0.07, blue: 0.08).opacity(0.92))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .shadow(color: .black.opacity(0.4), radius: 8, y: 3)
+    }
+
+    @ViewBuilder
+    private func itemContextMenu(_ item: Item) -> some View {
+        if item.status == .done {
+            Button("恢复为未读") {
+                store.updateStatus(id: item.id, status: .unread)
+            }
+        } else {
+            Button("标记为已读") {
+                markAsDone(item)
+            }
+            Button("标记为在读") {
+                store.updateStatus(id: item.id, status: .reading)
+            }
+        }
+        Button("编辑标签") {
+            tagEditingItem = item
+        }
+        Button("查看详情") {
+            selectedDetailItem = item
+        }
+        Divider()
+        Button("删除", role: .destructive) {
+            store.delete(id: item.id)
+        }
     }
 
     private func openSettings() {

@@ -8,6 +8,7 @@ final class HTTPServerService {
     private let database = DatabaseService.shared
     private let scraper = WebScraper()
     private var connections: [NWConnection] = []
+    private let connectionsLock = NSLock()
 
     func start() {
         do {
@@ -35,13 +36,32 @@ final class HTTPServerService {
 
     func stop() {
         listener?.cancel()
-        connections.forEach { $0.cancel() }
+        connectionsLock.lock()
+        let conns = connections
+        connections.removeAll()
+        connectionsLock.unlock()
+        conns.forEach { $0.cancel() }
     }
 
     // MARK: - Connection Handling
 
     private func handleConnection(_ conn: NWConnection) {
+        connectionsLock.lock()
         connections.append(conn)
+        connectionsLock.unlock()
+
+        // 连接结束（取消/失败）时从数组中移除，避免长期运行后缓慢泄漏
+        conn.stateUpdateHandler = { [weak self] state in
+            switch state {
+            case .cancelled, .failed:
+                self?.connectionsLock.lock()
+                self?.connections.removeAll { $0 === conn }
+                self?.connectionsLock.unlock()
+            default:
+                break
+            }
+        }
+
         conn.start(queue: .global(qos: .userInitiated))
         receiveRequest(conn)
     }
@@ -97,7 +117,7 @@ final class HTTPServerService {
             guard let url = params["url"] else {
                 return httpResponse(400, body: "{\"error\":\"Missing url\"}")
             }
-            let exists = database.exists(url: url)
+            let exists = database.existsNormalized(url: url)
             return httpResponse(200, body: "{\"exists\":\(exists)}")
         case ("GET", "/api/items"):
             let items = database.fetchAll()
@@ -120,20 +140,28 @@ final class HTTPServerService {
         }
 
         let title = json["title"] as? String ?? urlString
+        // 兼容：扩展端传拆分好的数组，或直接传逗号分隔字符串
+        var tags: [String] = []
+        if let tagArray = json["tags"] as? [String] {
+            tags = tagArray.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        } else if let tagString = json["tags"] as? String {
+            tags = TagParser.parse(tagString)
+        }
 
-        if database.exists(url: urlString) {
+        if database.existsNormalized(url: urlString) {
             return httpResponse(200, body: "{\"success\":false,\"message\":\"URL already saved\"}")
         }
 
         let domain = extractDomain(from: urlString)
         let item = Item(
             id: UUID(), url: urlString, content: urlString, title: title,
-            summary: nil, faviconData: nil, domain: domain, tags: [],
+            summary: nil, faviconData: nil, domain: domain, tags: tags,
             status: .unread, createdAt: Date(), readAt: nil
         )
 
         do {
             try database.save(item)
+            NotificationCenter.default.post(name: .itemsDidChange, object: nil)
             // Async scrape
             Task { await scrapeAndUpdate(item: item) }
             return httpResponse(200, body: "{\"success\":true,\"message\":\"Saved\"}")

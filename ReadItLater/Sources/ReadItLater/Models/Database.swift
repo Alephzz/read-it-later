@@ -85,17 +85,15 @@ final class DatabaseService {
         return queryItems(sql)
     }
 
-    func exists(url: String) -> Bool {
-        let sql = "SELECT COUNT(*) FROM items WHERE url = ?"
-        var stmt: OpaquePointer?
-        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return false }
-        defer { sqlite3_finalize(stmt) }
+    func fetchPending() -> [Item] {
+        // 待处理 = 未读 + 在读（还没读完的都算）
+        let sql = "SELECT * FROM items WHERE status != 2 ORDER BY createdAt DESC"
+        return queryItems(sql)
+    }
 
-        sqlite3_bind_text(stmt, 1, url, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
-        if sqlite3_step(stmt) == SQLITE_ROW {
-            return sqlite3_column_int(stmt, 0) > 0
-        }
-        return false
+    /// 归一化查重：去掉 utm 等追踪参数、尾斜杠后比较（见 DuplicateDetector）
+    func existsNormalized(url: String) -> Bool {
+        DuplicateDetector.isDuplicate(url: url, existingItems: fetchAll())
     }
 
     func updateStatus(id: UUID, status: ItemStatus) {
@@ -112,6 +110,13 @@ final class DatabaseService {
 
     func updateItem(_ item: Item) {
         try? save(item) // INSERT OR REPLACE handles update
+    }
+
+    /// 批量保存（导入用）：按 id 幂等合并，同 id 覆盖、新 id 插入
+    func saveItems(_ items: [Item]) {
+        for item in items {
+            try? save(item)
+        }
     }
 
     func delete(id: UUID) {

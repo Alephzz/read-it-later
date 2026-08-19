@@ -6,7 +6,7 @@ enum ItemStatus: Int, Codable {
     case done = 2
 }
 
-struct Item: Identifiable, Equatable {
+struct Item: Identifiable, Equatable, Codable {
     var id: UUID
     var url: String?
     var content: String
@@ -25,10 +25,24 @@ struct Item: Identifiable, Equatable {
         case fresh, aging, stale
 
         static func from(date: Date) -> Staleness {
+            let (agingDays, staleDays) = thresholds
             let days = Date().timeIntervalSince(date) / 86400
-            if days < 7 { return .fresh }
-            if days < 30 { return .aging }
+            if days < agingDays { return .fresh }
+            if days < staleDays { return .aging }
             return .stale
+        }
+
+        /// 读取设置中的阈值（"变黄天数,变红天数"，默认 7,30）
+        private static var thresholds: (aging: Double, stale: Double) {
+            let defaults = (aging: 7.0, stale: 30.0)
+            guard let raw = UserDefaults.standard.string(forKey: "stalenessDays") else {
+                return defaults
+            }
+            let parts = raw.split(separator: ",").compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+            guard parts.count == 2, parts[0] > 0, parts[1] > parts[0] else {
+                return defaults
+            }
+            return (parts[0], parts[1])
         }
     }
 
